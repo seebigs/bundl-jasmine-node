@@ -1,0 +1,24 @@
+{
+  "name": "bundl-jasmine-node",
+  "version": "1.0.0",
+  "description": "Run tests using Jasmine directly in Node. No browser needed!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seebigs/bundl-jasmine-node.git"
+  },
+  "author": "Chris Bigelow <seebigswork@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/seebigs/bundl-jasmine-node/issues"
+  },
+  "dependencies": {
+    "chalk": "^1.1.1",
+    "jasmine": "^2.4.1",
+    "jsdom": "^8.1.0",
+    "pretty-hrtime": "^1.0.2"
+  }
+}

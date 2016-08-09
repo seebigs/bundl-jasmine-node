@@ -7,9 +7,7 @@ var prettyTime = require('pretty-hrtime');
 
 var symbols = require('./symbols.js');
 
-var Bundl = require('../bundl');
-var b = new Bundl();
-var log = b.log;
+var log = console.log;
 
 var indents = 0;
 var indentLevel = 3;
@@ -45,10 +43,15 @@ module.exports = {
         if (opt.slowThreshold) {
             slowThreshold = opt.slowThreshold;
         }
+
+        if (opt.log) {
+            log = opt.log;
+        }
     },
 
     jasmineStarted: function (suiteInfo) {
-        log.section('Bundl tests starting (' + suiteInfo.totalSpecsDefined + ' tests)');
+        log();
+        log(chalk.blue('Bundl tests starting (' + suiteInfo.totalSpecsDefined + ' tests)\n'));
         totalTime = process.hrtime();
     },
 
@@ -118,12 +121,12 @@ module.exports = {
         if (total.slow) {
             log(chalk.yellow(symbols.warning + '  slow: ' + total.slow));
         }
-        log('\nFinished in ' + prettyTime(process.hrtime(totalTime)));
+        log();
+        log('Finished in ' + prettyTime(process.hrtime(totalTime)));
     },
 
-    // extra method just for dollarjs
-    noTestsRan: function () {
-        return total.passed === 0;
+    getResults: function () {
+        return total;
     }
 
 };

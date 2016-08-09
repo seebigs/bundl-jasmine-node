@@ -14,6 +14,7 @@ function testJasmine (b, files, options, callback) {
     window = doc.defaultView;
     document = window.document;
 
+    options.log = b.log;
     reporter.setReporterOptions(options);
     jasmine.addReporter(reporter);
 
@@ -24,7 +25,8 @@ function testJasmine (b, files, options, callback) {
 
     jasmine.onComplete(function(passed) {
         if (passed) {
-            if (reporter.noTestsRan()) {
+            var results = reporter.getResults();
+            if (!results || results.passed === 0) {
                 b.log('No tests ran');
             } else {
                 b.log.section('All tests have passed');

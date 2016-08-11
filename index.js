@@ -23,21 +23,21 @@ function testJasmine (b, files, options, callback) {
         jasmine.addSpecFile(file);
     });
 
-    jasmine.onComplete(function(passed) {
-        if (passed) {
-            var results = reporter.getResults();
-            if (!results || results.passed === 0) {
-                b.log('No tests ran');
-            } else {
-                b.log.section('All tests have passed');
-            }
+    jasmine.onComplete(function() {
+        var results = reporter.getResults();
 
-            if (typeof callback === 'function') {
-                callback();
-            }
+        if (!results || results.executed === 0) {
+            b.log('No tests ran');
+
+        } else if (results.failed > 0) {
+            b.log.error('Tests failed');
 
         } else {
-            b.log.error('Tests failed');
+            b.log.section('All tests have passed');
+        }
+
+        if (typeof callback === 'function') {
+            callback();
         }
     });
 

@@ -16,6 +16,7 @@ var totalTime, specTime;
 
 var total = {
     failedExpectations: [],
+    executed: 0,
     failed: 0,
     passed: 0,
     skipped: 0,
@@ -88,6 +89,8 @@ module.exports = {
                 log(chalk.gray(getIndents() + '- ' + result.description));
             }
         }
+
+        total.executed++;
     },
 
     suiteDone: function (result) {

@@ -1,6 +1,6 @@
 {
   "name": "bundl-jasmine-node",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Run tests using Jasmine directly in Node. No browser needed!",
   "main": "index.js",
   "scripts": {

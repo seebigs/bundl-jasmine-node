@@ -2,24 +2,28 @@
  * Jasmine-in-Node testing extension for Bundl
  */
 
+var bundlpack = require('bundlpack');
 var Jasmine = require('jasmine');
 var nodeAsBrowser = require('node-as-browser');
+var utils = require('seebigs-utils');
 
+var browserOpn = require('./browser/opn.js');
 var reporter = require('./reporter.js');
 
 
 function testJasmine (b, files, options, callback) {
 
     /* Init Global Env */
-
     nodeAsBrowser.init(global);
 
-    /* Init Jasmine */
-
-    var jasmine = new Jasmine();
-
+    /* Init Options */
     options.log = b.log;
     reporter.setReporterOptions(options);
+
+    /* Init Jasmine */
+    var jasmine = new Jasmine();
+
+    jasmine.env.clearReporters();
     jasmine.addReporter(reporter);
 
     files = files || [];
@@ -48,13 +52,47 @@ function testJasmine (b, files, options, callback) {
     jasmine.execute();
 }
 
+function debugInBrowser (b, files, options, callback) {
+    var concat = '';
+
+    files.forEach(function (file) {
+        concat += '\n\n' + utils.readFile(file);
+    });
+
+    // use bundlpack for easy requirifying
+    var testBundle = bundlpack({
+        name: 'test.js',
+        contents: concat,
+        src: files
+    }, {
+        paths: [
+            './test/files'
+        ]
+    }).contents;
+
+    var tmpFolder = '/tmp/bundl_jasmine_node_' + new Date().getTime();
+
+    utils.writeFile(tmpFolder + '/test.html', utils.readFile(__dirname + '/browser/test.html'));
+    utils.writeFile(tmpFolder + '/jasmine.css', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.css'));
+    utils.writeFile(tmpFolder + '/jasmine.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.js'));
+    utils.writeFile(tmpFolder + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine-html.js'));
+    utils.writeFile(tmpFolder + '/boot.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/boot.js'));
+
+    utils.writeFile(tmpFolder + '/test.js', testBundle);
+    browserOpn(tmpFolder + '/test.html', { tmp: tmpFolder });
+}
+
 
 module.exports = function (options) {
     options = options || {};
 
     function jasmineAll (files, done) {
         var bundl = this;
-        testJasmine(bundl, files, options, done);
+        if (bundl.args.env === 'browser') {
+            debugInBrowser(bundl, files, options, done);
+        } else {
+            testJasmine(bundl, files, options, done);
+        }
     }
 
     return {

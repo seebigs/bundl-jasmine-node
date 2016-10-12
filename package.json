@@ -16,10 +16,15 @@
     "url": "https://github.com/seebigs/bundl-jasmine-node/issues"
   },
   "dependencies": {
+    "bundlpack": "^0.1.0",
     "chalk": "^1.1.1",
     "jasmine": "^2.4.1",
     "jsdom": "^8.1.0",
     "node-as-browser": "^1.0.0",
-    "pretty-hrtime": "^1.0.2"
+    "pretty-hrtime": "^1.0.2",
+    "seebigs-utils": "^1.1.0"
+  },
+  "devDependencies": {
+    "minimist": "^1.2.0"
   }
 }

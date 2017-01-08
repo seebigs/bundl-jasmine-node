@@ -2,7 +2,7 @@
  * Jasmine-in-Node testing extension for Bundl
  */
 
-var bundlpack = require('bundlpack');
+var bundlPack = require('bundl-pack');
 var Jasmine = require('jasmine');
 var nodeAsBrowser = require('node-as-browser');
 var utils = require('seebigs-utils');
@@ -59,15 +59,15 @@ function debugInBrowser (b, files, options, callback) {
         concat += '\n\n' + utils.readFile(file);
     });
 
-    // use bundlpack for easy requirifying
-    var testBundle = bundlpack({
-        name: 'test.js',
-        contents: concat,
-        src: files
-    }, {
+    // use bundl-pack for easy requirifying
+    var testBundle = bundlPack({
         paths: [
             './test/files'
         ]
+    }).one(concat, {
+        name: 'test.js',
+        contents: concat,
+        src: files
     }).contents;
 
     var tmpFolder = '/tmp/bundl_jasmine_node_' + new Date().getTime();
@@ -86,7 +86,7 @@ function debugInBrowser (b, files, options, callback) {
 module.exports = function (options) {
     options = options || {};
 
-    function jasmineAll (files, done) {
+    function all (files, done) {
         var bundl = this;
         if (bundl.args.env === 'browser') {
             debugInBrowser(bundl, files, options, done);
@@ -96,7 +96,7 @@ module.exports = function (options) {
     }
 
     return {
-        all: jasmineAll
+        all: all
     };
 
 };

@@ -6,7 +6,7 @@
 
 > Testing framework by [Jasmine](http://jasmine.github.io/)
 
-> Runs with without a browser via [node-as-browser](https://github.com/seebigs/node-as-browser)
+> Runs without a browser via [node-as-browser](https://github.com/seebigs/node-as-browser)
 
 ## How to use
 

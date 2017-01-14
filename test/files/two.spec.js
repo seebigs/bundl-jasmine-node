@@ -1,3 +1,4 @@
+var entry = require('./entry.js');
 
 describe('two', function () {
 
@@ -6,8 +7,9 @@ describe('two', function () {
         expect(2).toBe(2);
     });
 
-    it('requires stuff', function () {
-        expect(require('./required.js').foo()).toBe('bar');
+    it('requires real stuff', function () {
+        expect(entry.foo()).toBe('foo');
+        expect(entry.bar).toBe('real');
     });
 
 });

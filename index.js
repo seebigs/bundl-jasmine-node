@@ -11,6 +11,12 @@ var browserOpn = require('./browser/opn.js');
 var reporter = require('./reporter.js');
 
 
+function clearRequireCache () {
+    for (var x in require.cache) {
+        delete require.cache[x];
+    }
+}
+
 function testJasmine (b, files, options, callback) {
 
     /* Init Global Env */
@@ -30,6 +36,14 @@ function testJasmine (b, files, options, callback) {
     files.forEach(function (file) {
         jasmine.addSpecFile(file);
     });
+
+    // Override Jasmine.prototype.loadSpecs to bust require.cache
+    jasmine.loadSpecs = function () {
+        this.specFiles.forEach(function(file) {
+            clearRequireCache();
+            require(file);
+        });
+    };
 
     jasmine.onComplete(function() {
         var results = reporter.getResults();

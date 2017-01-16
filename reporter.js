@@ -7,12 +7,15 @@ var prettyTime = require('pretty-hrtime');
 
 var symbols = require('./symbols.js');
 
+var args = {};
 var log = console.log;
 
 var indents = 0;
 var indentLevel = 3;
 var slowThreshold = 500; // in milliseconds
-var totalTime, specTime;
+var logLevel = 3;
+var spinner = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
+var totalTime, specTime, describeStack;
 
 var total = {
     failedExpectations: [],
@@ -20,7 +23,8 @@ var total = {
     failed: 0,
     passed: 0,
     skipped: 0,
-    slow: 0
+    slow: 0,
+    queued: 0
 };
 
 function convertHrtime (hrtime) {
@@ -41,6 +45,15 @@ function getIndents () {
 module.exports = {
 
     setReporterOptions: function (opt) {
+        if (opt.args) {
+            args = opt.args;
+            if (args.log === 'WARN') {
+                logLevel = 2;
+            } else if (args.log === 'ERROR') {
+                logLevel = 1;
+            }
+        }
+
         if (opt.slowThreshold) {
             slowThreshold = opt.slowThreshold;
         }
@@ -54,10 +67,15 @@ module.exports = {
         log();
         log(chalk.blue('Bundl tests starting (' + suiteInfo.totalSpecsDefined + ' tests)\n'));
         totalTime = process.hrtime();
+        total.queued = suiteInfo.totalSpecsDefined;
     },
 
     suiteStarted: function (result) {
-        log(getIndents() + result.description);
+        var indentedDescription = getIndents() + result.description;
+        if (logLevel > 2) {
+            log(indentedDescription);
+        }
+        describeStack = indents ? describeStack + '\n' + indentedDescription : indentedDescription;
         indents += indentLevel;
     },
 
@@ -66,6 +84,8 @@ module.exports = {
     },
 
     specDone: function (result) {
+        total.executed++;
+
         var duration = process.hrtime(specTime);
         var slow = convertHrtime(duration) > slowThreshold;
         var slowWarning = slow ? ' ' + chalk.yellow('(slow: ' + prettyTime(duration) + ')') : '';
@@ -79,18 +99,35 @@ module.exports = {
 
         if (result.status === 'passed') {
             total.passed++;
-            log(chalk.green(getIndents() + symbols.success + ' ' + result.description) + slowWarning);
+            if (logLevel > 2) {
+                log(chalk.green(getIndents() + symbols.success + ' ' + result.description) + slowWarning);
+            } else if (logLevel > 1) {
+                if (slow) {
+                    log(describeStack);
+                    log(chalk.yellow(getIndents() + symbols.success + ' ' + result.description) + slowWarning);
+                }
+            }
+
         } else if (result.status === 'failed') {
             total.failed++;
-            log(chalk.red(getIndents() + symbols.error + ' ' + result.description) + slowWarning);
+            if (logLevel > 2) {
+                log(chalk.red(getIndents() + symbols.error + ' ' + result.description) + slowWarning);
+            }
+
         } else {
             total.skipped++;
-            if (b.args.verbose) {
+            if (logLevel > 2) {
                 log(chalk.gray(getIndents() + '- ' + result.description));
             }
         }
 
-        total.executed++;
+        if (logLevel === 1) {
+            var percent = Math.round(total.executed/total.queued * 100);
+            var spin1 = total.executed%spinner.length;
+            var spin2 = spin1 - 1;
+            if (spin2 < 0) { spin2 = spinner.length - 1; }
+            process.stdout.write('\r' + spinner[spin1] + spinner[spin2] + ' ' + percent + '% ');
+        }
     },
 
     suiteDone: function (result) {
@@ -98,7 +135,7 @@ module.exports = {
     },
 
     jasmineDone: function () {
-        log();
+        log('\r       ');
 
         if (total.failedExpectations.length) {
             log(chalk.underline('FAILED TESTS'));

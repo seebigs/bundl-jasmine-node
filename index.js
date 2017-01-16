@@ -24,6 +24,7 @@ function testJasmine (b, files, options, callback) {
 
     /* Init Options */
     options.log = b.log;
+    options.args = b.args;
     reporter.setReporterOptions(options);
 
     /* Init Jasmine */

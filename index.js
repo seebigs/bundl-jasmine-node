@@ -2,7 +2,9 @@
  * Jasmine-in-Node testing extension for Bundl
  */
 
-var bundlPack = require('bundl-pack');
+require('require-cache-mock');
+
+var bundlPack = require('../bundl-pack');
 var Jasmine = require('jasmine');
 var nodeAsBrowser = require('node-as-browser');
 var utils = require('seebigs-utils');
@@ -34,6 +36,10 @@ function testJasmine (b, files, options, callback) {
     jasmine.addReporter(reporter);
 
     files = files || [];
+    if (options.haltOnException !== false) {
+        files.unshift(__dirname + '/halt.js');
+    }
+    files.unshift(__dirname + '/global.js');
     files.forEach(function (file) {
         jasmine.addSpecFile(file);
     });
@@ -71,7 +77,7 @@ function debugInBrowser (b, files, options, callback) {
     var concat = '';
 
     files.forEach(function (file) {
-        concat += '\n\n' + utils.readFile(file);
+        concat += '\n(function(){\n\n' + utils.readFile(file) + '\n})();\n';
     });
 
     // use bundl-pack for easy requirifying

@@ -1,8 +1,6 @@
-var mock = require('mock-require');
-
-mock('./mocked.js', { type: 'mocked' });
+require.cache.mock('./mocked.js', { type: 'mocked' });
 var entry = require('./entry.js');
-mock.stopAll();
+require.cache.mock.stopAll();
 
 describe('one', function () {
 

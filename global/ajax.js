@@ -4,7 +4,7 @@ global.fetch = require('../fetch.js');
 global.getJasmineRequireObj = function () {
     return global.jasmineRequire || jasmine;
 };
-require('../node_modules/jasmine-ajax');
+require('jasmine-ajax');
 
 
 beforeEach(function () {

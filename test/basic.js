@@ -12,7 +12,8 @@ var fakeBundl = {
 
 var testFiles = [
     path.resolve('test/files/one.spec.js'),
-    path.resolve('test/files/two.spec.js')
+    path.resolve('test/files/two.spec.js'),
+    path.resolve('test/files/three.spec.js')
 ];
 
 bundlJasmineNode({}).all.call(fakeBundl, testFiles);

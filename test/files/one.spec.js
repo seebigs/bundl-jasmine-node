@@ -4,7 +4,7 @@ require.cache.mock.stopAll();
 
 describe('one', function () {
 
-    describe('nested spec', function () {
+    describe('mocked spec', function () {
 
         it('does the thing', function () {
             expect(typeof jasmine.createSpy).toBe('function');

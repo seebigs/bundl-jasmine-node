@@ -14,6 +14,10 @@ describe('two', function () {
             it('requires real stuff', function () {
                 expect(entry.foo()).toBe('foo');
                 expect(entry.bar).toBe('real');
+
+                // mutate for next spec
+                require('./stateless.js').state = 'state';
+                entry.bar = 'mutated';
             });
 
         });

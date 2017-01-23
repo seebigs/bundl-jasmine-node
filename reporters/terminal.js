@@ -1,5 +1,5 @@
 /**
- * Bundl test reporter
+ * Terminal reporter
  */
 
 var chalk = require('chalk');
@@ -7,7 +7,6 @@ var prettyTime = require('pretty-hrtime');
 
 var symbols = require('./symbols.js');
 
-var args = {};
 var log = console.log;
 
 var indents = 0;
@@ -46,10 +45,9 @@ module.exports = {
 
     setReporterOptions: function (opt) {
         if (opt.args) {
-            args = opt.args;
-            if (args.log === 'WARN') {
+            if (opt.args.log === 'WARN') {
                 logLevel = 2;
-            } else if (args.log === 'ERROR') {
+            } else if (opt.args.log === 'ERROR') {
                 logLevel = 1;
             }
         }

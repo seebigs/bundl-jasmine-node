@@ -40,11 +40,13 @@ WARN - show warning messages and errors
 
 INFO - show the outcome of each test as it runs (default)
 
-### --env=browser
+### --browser
 
-*browser - compile tests into a standalone JS file and open them in your default browser*
+*opens in your default OS browser*
 
-This URL can also be opened by any browser on your machine
+Compile tests into a standalone JS file and open an html page that runs your tests and outputs to DOM and/or window.console
+
+This URL can be opened by any browser on your machine for testing in any browser
 
 ## Library Options
 
@@ -72,13 +74,13 @@ set to `false` to disable mocking setTimeout and setInterval (See [jasmine.clock
 
 set to `false` to allow suite to continue even after throwing an exception
 
-### htmlReporter (when --env=browser)
+### htmlReporter (when using --browser)
 
 *default: true*
 
 set to `false` to prevent writing test results into document.body
 
-### paths (when --env=browser)
+### paths (when using --browser)
 
 *Array of Strings telling Bundl how to resolve relative paths*
 

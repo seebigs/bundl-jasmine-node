@@ -161,7 +161,7 @@ module.exports = function (options) {
 
     function all (files, done) {
         var bundl = this;
-        if (bundl.args.env === 'browser') {
+        if (bundl.args.browser) {
             debugInBrowser(bundl, files, options, done);
         } else {
             runSpecsInNode(bundl, files, options, done);

@@ -1,19 +1,14 @@
-/**
- * Run basic validations
- */
-
+var babel = require('../../bundl-babel');   // FIXME
+var bundl = require('bundl');
 var bundlJasmineNode = require('../index.js');
-var path = require('path');
 
-var fakeBundl = {
-    args: require('./bundlMocks/args.js'),
-    log: require('./bundlMocks/log.js')
-};
-
-var testFiles = [
-    path.resolve('test/files/one.spec.js'),
-    path.resolve('test/files/two.spec.js'),
-    path.resolve('test/files/three.spec.js')
+var targetFiles = [
+    'one.spec.js',
+    'two.spec.js',
+    'three.spec.js'
 ];
 
-bundlJasmineNode({}).all.call(fakeBundl, testFiles);
+bundl(targetFiles, { targetDir: 'test/files' })
+    .then(babel())
+    .then(bundlJasmineNode({ slowThreshold: 500 }))
+    .all();

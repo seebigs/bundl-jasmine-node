@@ -24,5 +24,8 @@
     "pretty-hrtime": "^1.0.2",
     "require-cache-mock": "^0.1.1",
     "seebigs-utils": "^1.3.0"
+  },
+  "devDependencies": {
+    "bundl": "^0.6.3"
   }
 }

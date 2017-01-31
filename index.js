@@ -36,34 +36,6 @@ function runSpecsInNode (b, files, options, callback) {
     jasmine.env.clearReporters();
     jasmine.addReporter(terminalReporter);
 
-    files = files || [];
-
-    if (options.mockAjax !== false) {
-        files.unshift(__dirname + '/global/ajax.js');
-    }
-
-    if (options.mockTimeouts !== false) {
-        files.unshift(__dirname + '/global/timeouts.js');
-    }
-
-    if (options.haltOnException !== false) {
-        files.unshift(__dirname + '/halt.js');
-    }
-
-    files.unshift(__dirname + '/global/node.js');
-
-    files.forEach(function (file) {
-        jasmine.addSpecFile(file);
-    });
-
-    // Override Jasmine.prototype.loadSpecs to bust require.cache
-    jasmine.loadSpecs = function () {
-        this.specFiles.forEach(function(file) {
-            clearRequireCache();
-            require(file);
-        });
-    };
-
     jasmine.onComplete(function() {
         var results = terminalReporter.getResults();
 
@@ -80,6 +52,26 @@ function runSpecsInNode (b, files, options, callback) {
         if (typeof callback === 'function') {
             callback();
         }
+    });
+
+
+    if (options.mockAjax !== false) {
+        files.unshift(__dirname + '/global/ajax.js');
+    }
+
+    if (options.mockTimeouts !== false) {
+        files.unshift(__dirname + '/global/timeouts.js');
+    }
+
+    if (options.haltOnException !== false) {
+        files.unshift(__dirname + '/halt.js');
+    }
+
+    files.unshift(__dirname + '/global/node.js');
+
+    files.forEach(function (file) {
+        clearRequireCache();
+        require(file);
     });
 
     jasmine.execute();
@@ -135,32 +127,39 @@ function debugInBrowser (b, files, options, callback) {
         src: files
     }).contents;
 
-    var tmpFolder = '/tmp/bundl_jasmine_node_' + new Date().getTime();
+    var tmpWebsite = options.tmpDir + '/webtest_' + new Date().getTime();
 
-    utils.writeFile(tmpFolder + '/test.html', utils.readFile(__dirname + '/browser/test.html'));
-    utils.writeFile(tmpFolder + '/jasmine.css', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.css'));
-    utils.writeFile(tmpFolder + '/jasmine.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.js'));
+    utils.writeFile(tmpWebsite + '/test.html', utils.readFile(__dirname + '/browser/test.html'));
+    utils.writeFile(tmpWebsite + '/jasmine.css', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.css'));
+    utils.writeFile(tmpWebsite + '/jasmine.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.js'));
 
     if (options.htmlReporter === false) {
-        utils.writeFile(tmpFolder + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-html-stub.js'));
+        utils.writeFile(tmpWebsite + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-html-stub.js'));
     } else {
-        utils.writeFile(tmpFolder + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine-html.js'));
+        utils.writeFile(tmpWebsite + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine-html.js'));
     }
 
-    utils.writeFile(tmpFolder + '/console.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/console.js'));
-    utils.writeFile(tmpFolder + '/boot.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/boot.js'));
+    utils.writeFile(tmpWebsite + '/console.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/console.js'));
+    utils.writeFile(tmpWebsite + '/boot.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/boot.js'));
 
-    utils.writeFile(tmpFolder + '/test.js', testBundle);
-    b.log('Launching ' + tmpFolder + '/test.html');
-    browserOpn(tmpFolder + '/test.html', { tmp: tmpFolder });
+    utils.writeFile(tmpWebsite + '/test.js', testBundle);
+    b.log('Launching ' + tmpWebsite + '/test.html');
+    browserOpn(tmpWebsite + '/test.html', { tmp: tmpWebsite });
 }
 
 
 module.exports = function (options) {
     options = options || {};
 
+    if (!options.tmpDir) {
+        options.tmpDir = '/tmp/bundl_jasmine_node';
+    }
+
     function all (files, done) {
         var bundl = this;
+
+        files = files || [];
+
         if (bundl.args.browser) {
             debugInBrowser(bundl, files, options, done);
         } else {

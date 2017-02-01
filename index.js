@@ -79,14 +79,14 @@ function runSpecsInBrowser (b, tmpTestDir, options, callback) {
     }
 }
 
-function createSpecBundle (b, resources, options, callback) {
+function createSpecBundle (b, files, options, callback) {
     var globalFnName = '__bundl_prepare_tests';
     var concat = globalFnName + '();\n';
     var paths = [__dirname + '/global'].concat(options.paths || []);
 
-    utils.each(resources, function (r) {
-        concat += '\n__bundl_exec_test(function(){\n\n' + r.contents + '\n});\n';
-        var dir = path.dirname(r.src[0]);
+    utils.each(files, function (file) {
+        concat += '\n__bundl_exec_test(function(){\n\n' + utils.readFile(file) + '\n});\n';
+        var dir = path.dirname(file);
         if (paths.indexOf(dir) === -1) {
             paths.push(dir);
         }
@@ -130,7 +130,7 @@ function createSpecBundle (b, resources, options, callback) {
     var testBundle = bundlPack({ paths: paths }).one(concat, {
         name: 'test.js',
         contents: concat,
-        src: Object.keys(resources)
+        src: files
     }).contents;
 
     var tmpTestDir = options.tmpDir + '/test_' + new Date().getTime();
@@ -152,21 +152,12 @@ module.exports = function (options) {
         options.tmpDir = '/tmp/bundl_jasmine_node';
     }
 
-    var combinedContents = '';
-
-    function one (contents) {
-        combinedContents += '\n' + contents;
-        return contents;
-    }
-
-    function all (resources, done) {
+    function all (resources, srcFiles, done) {
         var bundl = this;
-        resources = resources || {};
-        createSpecBundle(bundl, resources, options, done);
+        createSpecBundle(bundl, srcFiles || [], options, done);
     }
 
     return {
-        one: one,
         all: all
     };
 

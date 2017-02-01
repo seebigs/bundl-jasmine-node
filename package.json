@@ -26,6 +26,6 @@
     "seebigs-utils": "^1.3.0"
   },
   "devDependencies": {
-    "bundl": "^0.6.3"
+    "bundl": "^0.7.0"
   }
 }

@@ -1,4 +1,3 @@
-var babel = require('../../bundl-babel');       // FIXME
 var bundl = require('bundl');
 var bundlJasmineNode = require('../index.js');
 

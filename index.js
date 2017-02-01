@@ -2,8 +2,6 @@
  * Jasmine-in-Node testing extension for Bundl
  */
 
-require('require-cache-mock');
-
 var bundlPack = require('bundl-pack');
 var Jasmine = require('jasmine');
 var nodeAsBrowser = require('node-as-browser');
@@ -14,13 +12,7 @@ var browserOpn = require('./browser/opn.js');
 var terminalReporter = require('./reporters/terminal.js');
 
 
-function clearRequireCache () {
-    for (var x in require.cache) {
-        delete require.cache[x];
-    }
-}
-
-function runSpecsInNode (b, files, options, callback) {
+function runSpecsInNode (b, tempBundle, options, callback) {
 
     /* Init Global Env */
     nodeAsBrowser.init(global);
@@ -54,37 +46,47 @@ function runSpecsInNode (b, files, options, callback) {
         }
     });
 
-
-    if (options.mockAjax !== false) {
-        files.unshift(__dirname + '/global/ajax.js');
-    }
-
-    if (options.mockTimeouts !== false) {
-        files.unshift(__dirname + '/global/timeouts.js');
-    }
+    /* Load Files */
 
     if (options.haltOnException !== false) {
-        files.unshift(__dirname + '/halt.js');
+        require(__dirname + '/global/halt.js');
     }
 
-    files.unshift(__dirname + '/global/node.js');
-
-    files.forEach(function (file) {
-        clearRequireCache();
-        require(file);
-    });
+    require(tempBundle);
 
     jasmine.execute();
 }
 
-function debugInBrowser (b, files, options, callback) {
+function runSpecsInBrowser (b, tmpTestDir, options, callback) {
+    utils.writeFile(tmpTestDir + '/test.html', utils.readFile(__dirname + '/browser/test.html'));
+    utils.writeFile(tmpTestDir + '/jasmine.css', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.css'));
+    utils.writeFile(tmpTestDir + '/jasmine.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.js'));
+
+    if (options.htmlReporter === false) {
+        utils.writeFile(tmpTestDir + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-html-stub.js'));
+    } else {
+        utils.writeFile(tmpTestDir + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine-html.js'));
+    }
+
+    utils.writeFile(tmpTestDir + '/console.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/console.js'));
+    utils.writeFile(tmpTestDir + '/boot.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/boot.js'));
+
+    b.log('Launching ' + tmpTestDir + '/test.html');
+    browserOpn(tmpTestDir + '/test.html', { tmp: tmpTestDir });
+
+    if (typeof callback === 'function') {
+        callback();
+    }
+}
+
+function createSpecBundle (b, resources, options, callback) {
     var globalFnName = '__bundl_prepare_tests';
     var concat = globalFnName + '();\n';
     var paths = [__dirname + '/global'].concat(options.paths || []);
 
-    files.forEach(function (file) {
-        concat += '\n__bundl_exec_test(function(){\n\n' + utils.readFile(file) + '\n});\n';
-        var dir = path.dirname(file);
+    utils.each(resources, function (r) {
+        concat += '\n__bundl_exec_test(function(){\n\n' + r.contents + '\n});\n';
+        var dir = path.dirname(r.src[0]);
         if (paths.indexOf(dir) === -1) {
             paths.push(dir);
         }
@@ -92,7 +94,11 @@ function debugInBrowser (b, files, options, callback) {
 
     concat += '\nfunction ' + globalFnName + ' () {\n';
 
-    var globals = [__dirname + '/global/browser.js'];
+    var globals = [__dirname + '/global/window.js'];
+
+    if (b.args.browser) {
+        globals.push(__dirname + '/global/browser.js');
+    }
 
     if (options.mockTimeouts !== false) {
         globals.push(__dirname + '/global/timeouts.js');
@@ -124,27 +130,18 @@ function debugInBrowser (b, files, options, callback) {
     var testBundle = bundlPack({ paths: paths }).one(concat, {
         name: 'test.js',
         contents: concat,
-        src: files
+        src: Object.keys(resources)
     }).contents;
 
-    var tmpWebsite = options.tmpDir + '/webtest_' + new Date().getTime();
+    var tmpTestDir = options.tmpDir + '/test_' + new Date().getTime();
 
-    utils.writeFile(tmpWebsite + '/test.html', utils.readFile(__dirname + '/browser/test.html'));
-    utils.writeFile(tmpWebsite + '/jasmine.css', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.css'));
-    utils.writeFile(tmpWebsite + '/jasmine.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.js'));
-
-    if (options.htmlReporter === false) {
-        utils.writeFile(tmpWebsite + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-html-stub.js'));
-    } else {
-        utils.writeFile(tmpWebsite + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine-html.js'));
-    }
-
-    utils.writeFile(tmpWebsite + '/console.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/console.js'));
-    utils.writeFile(tmpWebsite + '/boot.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/boot.js'));
-
-    utils.writeFile(tmpWebsite + '/test.js', testBundle);
-    b.log('Launching ' + tmpWebsite + '/test.html');
-    browserOpn(tmpWebsite + '/test.html', { tmp: tmpWebsite });
+    utils.writeFile(tmpTestDir + '/test.js', testBundle, function (written) {
+        if (b.args.browser) {
+            runSpecsInBrowser(b, tmpTestDir, options, callback);
+        } else {
+            runSpecsInNode(b, written.path, options, callback);
+        }
+    });
 }
 
 
@@ -155,19 +152,21 @@ module.exports = function (options) {
         options.tmpDir = '/tmp/bundl_jasmine_node';
     }
 
-    function all (files, done) {
+    var combinedContents = '';
+
+    function one (contents) {
+        combinedContents += '\n' + contents;
+        return contents;
+    }
+
+    function all (resources, done) {
         var bundl = this;
-
-        files = files || [];
-
-        if (bundl.args.browser) {
-            debugInBrowser(bundl, files, options, done);
-        } else {
-            runSpecsInNode(bundl, files, options, done);
-        }
+        resources = resources || {};
+        createSpecBundle(bundl, resources, options, done);
     }
 
     return {
+        one: one,
         all: all
     };
 

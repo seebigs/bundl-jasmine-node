@@ -1,5 +1,5 @@
 
-global.fetch = require('../fetch.js');
+global.fetch = require('./fetch.js');
 
 global.getJasmineRequireObj = function () {
     return global.jasmineRequire || jasmine;

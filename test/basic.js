@@ -1,5 +1,5 @@
-var babel = require('../../bundl-babel');   // FIXME
-var bundl = require('bundl');
+var babel = require('../../bundl-babel');       // FIXME
+var bundl = require('../../bundl');             // FIXME
 var bundlJasmineNode = require('../index.js');
 
 var targetFiles = [
@@ -9,6 +9,5 @@ var targetFiles = [
 ];
 
 bundl(targetFiles, { targetDir: 'test/files' })
-    .then(babel())
     .then(bundlJasmineNode({ slowThreshold: 500 }))
     .all();

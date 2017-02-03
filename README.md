@@ -14,9 +14,13 @@ unitTests.js
 ```js
 var bundl = require('bundl');
 var jasmine = require('bundl-jasmine-node');
+var babelProcessor = require('bundl-pack-babel');
 
 var options = {
     slowThreshold: 500 //ms
+    pack: {
+        js: babelProcessor() // lets you write test code in ES6
+    }
 };
 
 bundl(['./spec/*'])

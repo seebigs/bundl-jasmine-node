@@ -1,4 +1,4 @@
-import * as entry from './entry.js';
+var entry = require('../fixture/entry.js');
 
 describe('two', function () {
 
@@ -16,7 +16,7 @@ describe('two', function () {
                 expect(entry.bar).toBe('real');
 
                 // mutate for next spec
-                require('./stateless.js').state = 'state';
+                require('../fixture/stateless.js').state = 'state';
                 entry.bar = 'mutated';
             });
 

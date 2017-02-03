@@ -1,10 +1,10 @@
-var entry = require('./entry.js');
+import * as entry from '../fixture/entry.js';
 
 describe('two', function () {
 
     describe('nested', function () {
 
-        describe('specs', function () {
+        describe('specs (in ES6)', function () {
 
             it('does multiple things', function () {
                 expect(1).toBe(1);
@@ -16,7 +16,7 @@ describe('two', function () {
                 expect(entry.bar).toBe('real');
 
                 // mutate for next spec
-                require('./stateless.js').state = 'state';
+                require('../fixture/stateless.js').state = 'state';
                 entry.bar = 'mutated';
             });
 

@@ -83,9 +83,17 @@ function createSpecBundle (b, files, options, callback) {
     var globalFnName = '__bundl_prepare_tests';
     var concat = globalFnName + '();\n';
     var paths = [__dirname + '/global'].concat(options.paths || []);
+    var packOptions = options.pack || {};
 
     utils.each(files, function (file) {
-        concat += '\n__bundl_exec_test(function(){\n\n' + utils.readFile(file) + '\n});\n';
+        var specContents = utils.readFile(file);
+        if (typeof packOptions.js === 'function') {
+            var processor = packOptions.js(null, options).processor;
+            if (typeof processor === 'function') {
+                specContents = processor({ contents: specContents });
+            }
+        }
+        concat += '\n__bundl_exec_test(function(){\n\n' + specContents + '\n});\n';
         var dir = path.dirname(file);
         if (paths.indexOf(dir) === -1) {
             paths.push(dir);
@@ -126,14 +134,15 @@ function createSpecBundle (b, files, options, callback) {
     concat += __bundl_exec_test.toString() + '\n';
 
 
+    var tmpTestDir = options.tmpDir + '/test_' + new Date().getTime();
+
     // use bundl-pack for easy requirifying
-    var testBundle = bundlPack({ paths: paths }).one(concat, {
+    packOptions.paths = packOptions.paths || paths;
+    var testBundle = bundlPack(packOptions).one(concat, {
         name: 'test.js',
         contents: concat,
         src: files
     }).contents;
-
-    var tmpTestDir = options.tmpDir + '/test_' + new Date().getTime();
 
     utils.writeFile(tmpTestDir + '/test.js', testBundle, function (written) {
         if (b.args.browser) {

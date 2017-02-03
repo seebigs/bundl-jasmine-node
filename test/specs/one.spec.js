@@ -1,5 +1,5 @@
-require.cache.mock('./mocked.js', { type: 'mocked' });
-var entry = require('./entry.js');
+require.cache.mock('../fixture/mocked.js', { type: 'mocked' });
+var entry = require('../fixture/entry.es6.js');
 require.cache.mock.stopAll();
 
 describe('one', function () {

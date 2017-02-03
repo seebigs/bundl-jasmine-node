@@ -1,11 +1,11 @@
-var entry = require('./entry.js');
+var entry = require('../fixture/entry.js');
 
 describe('three', function () {
 
     describe('side affects', function () {
 
         it('clears require cache between specs', function () {
-            expect(require('./stateless.js').state).toBe('none');
+            expect(require('../fixture/stateless.js').state).toBe('none');
             expect(entry.bar).toBe('real');
         });
 

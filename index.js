@@ -13,27 +13,9 @@ var terminalReporter = require('./reporters/terminal.js');
 
 
 function createSpecBundle (b, files, options, callback) {
-    var globalFnName = '__bundl_prepare_tests';
-    var concat = globalFnName + '();\n';
     var paths = [__dirname + '/global'].concat(options.paths || []);
     var packOptions = options.pack || {};
-
-    utils.each(files, function (file) {
-        var specContents = utils.readFile(file);
-        if (typeof packOptions.js === 'function') {
-            var processor = packOptions.js(null, options).processor;
-            if (typeof processor === 'function') {
-                specContents = processor({ contents: specContents });
-            }
-        }
-        concat += '\n__bundl_exec_test(function(){\n\n' + specContents + '\n});\n';
-        var dir = path.dirname(file);
-        if (paths.indexOf(dir) === -1) {
-            paths.push(dir);
-        }
-    });
-
-    concat += '\nfunction ' + globalFnName + ' () {\n';
+    var concat = '// global helpers\n';
 
     var globals = [__dirname + '/global/window.js'];
 
@@ -50,24 +32,22 @@ function createSpecBundle (b, files, options, callback) {
     }
 
     globals.forEach(function (file) {
-        concat += '\n(function(){\n\n' + utils.readFile(file) + '\n})();\n';
+        concat += 'require("' + file + '");\n';
         var dir = path.dirname(file);
         if (paths.indexOf(dir) === -1) {
             paths.push(dir);
         }
     });
 
-    concat += '\n}\n';
+    concat += '\n// spec files\n';
 
-    function __bundl_exec_test (fn) {
-        require.cache.clear();
-        fn();
-    }
-
-    concat += __bundl_exec_test.toString() + '\n';
-
-
-    var tmpTestDir = options.tmpDir + '/test_' + new Date().getTime();
+    utils.each(files, function (file) {
+        concat += 'require.cache.clear();\nrequire("' + file + '");\n';
+        var dir = path.dirname(file);
+        if (paths.indexOf(dir) === -1) {
+            paths.push(dir);
+        }
+    });
 
     // use bundl-pack for easy requirifying
     packOptions.paths = packOptions.paths || paths;
@@ -77,13 +57,17 @@ function createSpecBundle (b, files, options, callback) {
         src: files
     }).contents;
 
-    utils.writeFile(tmpTestDir + '/test.js', testBundle, function (written) {
-        if (b.args.browser) {
+    var tmpTestDir = __dirname + '/browser';
+    if (b.args.browser) {
+        tmpTestDir = options.tmpDir + '/test_' + new Date().getTime();
+        utils.writeFile(tmpTestDir + '/test.js', testBundle, function (written) {
             runSpecsInBrowser(b, tmpTestDir, options, callback);
-        } else {
+        });
+    } else {
+        utils.writeFile(tmpTestDir + '/test.js', testBundle, function (written) {
             runSpecsInNode(b, written.path, options, callback);
-        }
-    });
+        });
+    }
 }
 
 function runSpecsInNode (b, tempBundle, options, callback) {
@@ -132,18 +116,23 @@ function runSpecsInNode (b, tempBundle, options, callback) {
 }
 
 function runSpecsInBrowser (b, tmpTestDir, options, callback) {
-    utils.writeFile(tmpTestDir + '/test.html', utils.readFile(__dirname + '/browser/test.html'));
-    utils.writeFile(tmpTestDir + '/jasmine.css', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.css'));
-    utils.writeFile(tmpTestDir + '/jasmine.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine.js'));
 
-    if (options.htmlReporter === false) {
-        utils.writeFile(tmpTestDir + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-html-stub.js'));
-    } else {
-        utils.writeFile(tmpTestDir + '/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/jasmine-html.js'));
+    function writeForBrowser (path) {
+        utils.writeFile(tmpTestDir + path, utils.readFile(__dirname + '/browser' + path));
     }
 
-    utils.writeFile(tmpTestDir + '/console.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/console.js'));
-    utils.writeFile(tmpTestDir + '/boot.js', utils.readFile(__dirname + '/browser/jasmine-2.5.2/boot.js'));
+    writeForBrowser('/test.html');
+    writeForBrowser('/jasmine/jasmine.css');
+    writeForBrowser('/jasmine/jasmine.js');
+
+    if (options.htmlReporter === false) {
+        utils.writeFile(tmpTestDir + '/jasmine/jasmine-html.js', utils.readFile(__dirname + '/browser/jasmine-html-stub.js'));
+    } else {
+        writeForBrowser('/jasmine/jasmine-html.js');
+    }
+
+    writeForBrowser('/jasmine/console.js');
+    writeForBrowser('/jasmine/boot.js');
 
     b.log('Launching ' + tmpTestDir + '/test.html');
     browserOpn(tmpTestDir + '/test.html', { tmp: tmpTestDir });

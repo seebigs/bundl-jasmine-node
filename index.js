@@ -2,14 +2,14 @@
  * Jasmine-in-Node testing extension for Bundl
  */
 
-var bundlPack = require('bundl-pack');
+var bundlPack = require('../bundl-pack');   // FIXME
 var Jasmine = require('jasmine');
 var nodeAsBrowser = require('node-as-browser');
 var path = require('path');
+var stackRemap = require('stack-remap');
 var utils = require('seebigs-utils');
 
 var browserOpn = require('./browser/opn.js');
-var terminalReporter = require('./reporters/terminal.js');
 
 
 function createSpecBundle (b, files, options, callback) {
@@ -51,26 +51,39 @@ function createSpecBundle (b, files, options, callback) {
 
     // use bundl-pack for easy requirifying
     packOptions.paths = packOptions.paths || paths;
-    var testBundle = bundlPack(packOptions).one(concat, {
+    var testBundl = bundlPack(packOptions).one.call({ LINES: concat.split('\n').length }, concat, {
         name: 'test.js',
         contents: concat,
-        src: files
-    }).contents;
+        src: files,
+        sourcemaps: []
+    });
 
     var tmpTestDir = __dirname + '/browser';
     if (b.args.browser) {
         tmpTestDir = options.tmpDir + '/test_' + new Date().getTime();
-        utils.writeFile(tmpTestDir + '/test.js', testBundle, function (written) {
+        utils.writeFile(tmpTestDir + '/test.js', testBundl.contents, function (written) {
             runSpecsInBrowser(b, tmpTestDir, options, callback);
         });
     } else {
-        utils.writeFile(tmpTestDir + '/test.js', testBundle, function (written) {
-            runSpecsInNode(b, written.path, options, callback);
+        utils.writeFile(tmpTestDir + '/test.js', testBundl.contents, function (written) {
+            runSpecsInNode(b, testBundl, written.path, options, callback);
         });
     }
 }
 
-function runSpecsInNode (b, tempBundle, options, callback) {
+function runSpecsInNode (b, testBundl, tempBundlePath, options, callback) {
+    var shouldStackRemap = !options.pack || !options.pack.js;
+
+    /* Clear Node's Cache */
+    for (var x in require.cache) {
+        delete require.cache[x];
+    }
+
+    /* Enble StackRemap */
+    if (shouldStackRemap) {
+        stackRemap.install();
+        stackRemap.add(testBundl.sourcemaps);
+    }
 
     /* Init Global Env */
     nodeAsBrowser.init(global);
@@ -78,6 +91,7 @@ function runSpecsInNode (b, tempBundle, options, callback) {
     /* Init Options */
     options.log = b.log;
     options.args = b.args;
+    var terminalReporter = require('./reporters/terminal.js'); // need a fresh reporter each time
     terminalReporter.setReporterOptions(options);
 
     /* Init Jasmine */
@@ -99,6 +113,12 @@ function runSpecsInNode (b, tempBundle, options, callback) {
             b.log.section('All tests have passed');
         }
 
+        // Disable StackRemap
+        if (shouldStackRemap) {
+            stackRemap.reset();
+            stackRemap.uninstall();
+        }
+
         if (typeof callback === 'function') {
             callback();
         }
@@ -110,7 +130,7 @@ function runSpecsInNode (b, tempBundle, options, callback) {
         require(__dirname + '/global/halt.js');
     }
 
-    require(tempBundle);
+    require(tempBundlePath);
 
     jasmine.execute();
 }

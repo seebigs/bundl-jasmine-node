@@ -3,18 +3,18 @@ var bundl = require('bundl');
 var bundlBabel = require('bundl-pack');
 var bundlJasmineNode = require('../index.js');
 
-var targetFiles = [
-    'one.spec.js',
-    'two.spec.es6.js',
-    'three.spec.js'
-];
-
-var options = {
-    pack: {
-        js: babelProcessor()
-    }
+var bundlOptions = {
+    targetDir: 'test/specs'
 };
 
-bundl(targetFiles, { targetDir: 'test/specs' })
-    .then(bundlJasmineNode(options))
-    .all();
+bundl([ 'one.spec.js', 'two.spec.js', 'three.spec.js' ], bundlOptions)
+    .then(bundlJasmineNode())
+    .all(function () {
+        bundl([ 'one.spec.es6.js', 'two.spec.es6.js', 'three.spec.js' ], bundlOptions)
+            .then(bundlJasmineNode({
+                pack: {
+                    js: babelProcessor()
+                }
+            }))
+            .all();
+    });

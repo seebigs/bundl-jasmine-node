@@ -19,7 +19,7 @@ function createSpecBundle (b, files, options, callback) {
 
     var globals = [__dirname + '/global/window.js'];
 
-    if (b.args.browser) {
+    if (options.browser) {
         globals.push(__dirname + '/global/browser.js');
     }
 
@@ -59,7 +59,7 @@ function createSpecBundle (b, files, options, callback) {
     });
 
     var tmpTestDir = __dirname + '/browser';
-    if (b.args.browser) {
+    if (options.browser) {
         tmpTestDir = options.tmpDir + '/test_' + new Date().getTime();
         utils.writeFile(tmpTestDir + '/test.js', testBundl.contents, function (written) {
             runSpecsInBrowser(b, tmpTestDir, options, callback);
@@ -89,8 +89,7 @@ function runSpecsInNode (b, testBundl, tempBundlePath, options, callback) {
     nodeAsBrowser.init(global);
 
     /* Init Options */
-    options.log = b.log;
-    options.args = b.args;
+    options.logger = b.log;
     var terminalReporter = require('./reporters/terminal.js'); // need a fresh reporter each time
     terminalReporter.setReporterOptions(options);
 
@@ -172,6 +171,7 @@ module.exports = function (options) {
 
     function all (resources, srcFiles, done) {
         var bundl = this;
+        Object.assign(options, bundl.args);
         createSpecBundle(bundl, srcFiles || [], options, done);
     }
 

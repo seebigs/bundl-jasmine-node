@@ -44,20 +44,18 @@ function getIndents () {
 module.exports = {
 
     setReporterOptions: function (opt) {
-        if (opt.args) {
-            if (opt.args.log === 'WARN') {
-                logLevel = 2;
-            } else if (opt.args.log === 'ERROR') {
-                logLevel = 1;
-            }
+        if (opt.log === 'WARN') {
+            logLevel = 2;
+        } else if (opt.log === 'ERROR') {
+            logLevel = 1;
         }
 
         if (opt.slowThreshold) {
             slowThreshold = opt.slowThreshold;
         }
 
-        if (opt.log) {
-            log = opt.log;
+        if (opt.logger) {
+            log = opt.logger;
         }
     },
 

@@ -4,7 +4,7 @@ var bundlBabel = require('bundl-pack');
 var bundlJasmineNode = require('../index.js');
 
 var bundlOptions = {
-    targetDir: 'test/specs'
+    srcDir: 'specs'
 };
 
 bundl([ 'one.spec.js', 'two.spec.js', 'three.spec.js' ], bundlOptions)

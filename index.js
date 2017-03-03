@@ -2,7 +2,7 @@
  * Jasmine-in-Node testing extension for Bundl
  */
 
-var bundlPack = require('../bundl-pack');   // FIXME
+var bundlPack = require('bundl-pack');
 var Jasmine = require('jasmine');
 var nodeAsBrowser = require('node-as-browser');
 var path = require('path');
@@ -13,7 +13,7 @@ var browserOpn = require('./browser/opn.js');
 
 
 function createSpecBundle (b, files, options, callback) {
-    var paths = [__dirname + '/global'].concat(options.paths || []);
+    var paths = [].concat(options.paths || []);
     var packOptions = options.pack || {};
     var concat = '// global helpers\n';
 
@@ -33,25 +33,17 @@ function createSpecBundle (b, files, options, callback) {
 
     globals.forEach(function (file) {
         concat += 'require("' + file + '");\n';
-        var dir = path.dirname(file);
-        if (paths.indexOf(dir) === -1) {
-            paths.push(dir);
-        }
     });
 
     concat += '\n// spec files\n';
 
     utils.each(files, function (file) {
         concat += 'require.cache.clear();\nrequire("' + file + '");\n';
-        var dir = path.dirname(file);
-        if (paths.indexOf(dir) === -1) {
-            paths.push(dir);
-        }
     });
 
     // use bundl-pack for easy requirifying
     packOptions.paths = packOptions.paths || paths;
-    var testBundl = bundlPack(packOptions).one.call({ LINES: concat.split('\n').length }, concat, {
+    var testBundl = bundlPack(packOptions).one.call({ LINES: concat.split('\n').length + 1 }, concat, {
         name: 'test.js',
         contents: concat,
         src: files,

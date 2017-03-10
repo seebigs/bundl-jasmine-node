@@ -8,10 +8,11 @@ var bundlOptions = {
 };
 
 bundl([ 'one.spec.js', 'two.spec.js', 'three.spec.js' ], bundlOptions)
-    .then(bundlJasmineNode())
+    .then(bundlJasmineNode({ clearCacheBeforeEach: true }))
     .all(function () {
         bundl([ 'one.spec.es6.js', 'two.spec.es6.js', 'three.spec.js' ], bundlOptions)
             .then(bundlJasmineNode({
+                clearCacheBeforeEach: true,
                 pack: {
                     js: babelProcessor()
                 }

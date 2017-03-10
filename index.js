@@ -2,7 +2,7 @@
  * Jasmine-in-Node testing extension for Bundl
  */
 
-var bundlPack = require('bundl-pack');
+var bundlPack = require('../bundl-pack'); // FIXME
 var Jasmine = require('jasmine');
 var nodeAsBrowser = require('node-as-browser');
 var path = require('path');
@@ -12,7 +12,7 @@ var utils = require('seebigs-utils');
 var browserOpn = require('./browser/opn.js');
 
 
-function createSpecBundle (b, files, options, callback) {
+function createSpecBundle (b, specFiles, options, callback) {
     var paths = [].concat(options.paths || []);
     var packOptions = options.pack || {};
     var concat = '// global helpers\n';
@@ -35,18 +35,41 @@ function createSpecBundle (b, files, options, callback) {
         concat += 'require("' + file + '");\n';
     });
 
-    concat += '\n// spec files\n';
+    if (options.helpers) {
+        utils.each(options.helpers, function (helperFile) {
+            concat += 'require("' + path.resolve(helperFile) + '");\n'
+        });
+    }
 
-    utils.each(files, function (file) {
-        concat += 'require.cache.clear();\nrequire("' + file + '");\n';
+    var helpersBundl = bundlPack().one.call({ LINES: concat.split('\n').length + 3 }, concat, {
+        name: 'test_helpers.js',
+        contents: concat,
+        src: [],
+        sourcemaps: []
+    });
+
+    // reset concat for next bundle
+    concat = '';
+
+    if (options.clearCacheBeforeEach) {
+        concat += 'beforeEach(function(){ require.cache.clear(); });\n\n';
+    }
+
+    concat += '// spec files\n';
+
+    utils.each(specFiles, function (file) {
+        if (options.clearCacheBeforeEach) {
+            concat += 'require.cache.clear();\n';
+        }
+        concat += 'require("' + file + '");\n';
     });
 
     // use bundl-pack for easy requirifying
     packOptions.paths = packOptions.paths || paths;
-    var testBundl = bundlPack(packOptions).one.call({ LINES: concat.split('\n').length + 1 }, concat, {
+    var testBundl = bundlPack(packOptions).one.call({ LINES: concat.split('\n').length + 3 }, concat, {
         name: 'test.js',
         contents: concat,
-        src: files,
+        src: [],
         sourcemaps: []
     });
 
@@ -57,13 +80,18 @@ function createSpecBundle (b, files, options, callback) {
             runSpecsInBrowser(b, tmpTestDir, options, callback);
         });
     } else {
-        utils.writeFile(tmpTestDir + '/test.js', testBundl.contents, function (written) {
-            runSpecsInNode(b, testBundl, written.path, options, callback);
+        var tempBundlePaths = [];
+        utils.writeFile(tmpTestDir + '/test_helpers.js', helpersBundl.contents, function (wHelpers) {
+            tempBundlePaths.push(wHelpers.path);
+            utils.writeFile(tmpTestDir + '/test.js', testBundl.contents, function (wTests) {
+                tempBundlePaths.push(wTests.path);
+                runSpecsInNode(b, testBundl, tempBundlePaths, options, callback);
+            });
         });
     }
 }
 
-function runSpecsInNode (b, testBundl, tempBundlePath, options, callback) {
+function runSpecsInNode (b, testBundl, tempBundlePaths, options, callback) {
     var shouldStackRemap = !options.pack || !options.pack.js;
 
     /* Clear Node's Cache */
@@ -121,7 +149,9 @@ function runSpecsInNode (b, testBundl, tempBundlePath, options, callback) {
         require(__dirname + '/global/halt.js');
     }
 
-    require(tempBundlePath);
+    utils.each(tempBundlePaths, function (tempBundlePath) {
+        require(tempBundlePath);
+    });
 
     jasmine.execute();
 }

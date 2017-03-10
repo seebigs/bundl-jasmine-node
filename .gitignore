@@ -1,3 +1,4 @@
 .DS_Store
 node_modules
 browser/test.js
+browser/test_helpers.js

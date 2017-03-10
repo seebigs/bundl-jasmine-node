@@ -3,7 +3,7 @@
  */
 
 var log = console.log;
-var logError = console.error || console.log;
+var logWarn = console.warn || console.log;
 
 var indents = 0;
 var indentLevel = 3;
@@ -89,7 +89,7 @@ module.exports = {
                 ex.failedExpectations.forEach(function (failure) {
                     errMsg += '\n' + failure.message;
                 });
-                logError(errMsg);
+                logWarn(errMsg);
             });
         }
 

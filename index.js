@@ -2,7 +2,7 @@
  * Jasmine-in-Node testing extension for Bundl
  */
 
-var bundlPack = require('../bundl-pack'); // FIXME
+var bundlPack = require('bundl-pack');
 var Jasmine = require('jasmine');
 var nodeAsBrowser = require('node-as-browser');
 var path = require('path');

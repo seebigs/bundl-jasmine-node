@@ -25,7 +25,7 @@ var options = {
 
 bundl(['./spec/*'])
     .then(jasmine(options))
-    .all();
+    .go();
 ```
 
 ```

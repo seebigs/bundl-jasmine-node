@@ -92,7 +92,7 @@ function createSpecBundle (b, specFiles, options, callback) {
 }
 
 function runSpecsInNode (b, testBundl, tempBundlePaths, options, callback) {
-    var shouldStackRemap = !options.pack || !options.pack.js;
+    var shouldStackRemap = options.shouldStackRemap !== false;
 
     /* Clear Node's Cache */
     for (var x in require.cache) {
